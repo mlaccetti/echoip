@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>What is my ip address?</title>
+  <title>What is my ip address? &mdash; {{ data.host }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta
     name="description"
-    content="What is my ip address? &mdash; The best tool to find your own ip address, and information about it."
+    content="{{ data.host }} • What is my ip address? &mdash; The best tool to find your own ip address, and information about it."
   />
   <link rel="canonical" href="https://ifconfig.co/"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -26,18 +26,521 @@
     integrity="sha384-b92sF+wDNTHrfEtRaYo+EpcA8FUyHOSXrdxKc9XB9kaaX1rSQAgMevW6cYeE5Bdv"
     crossorigin="anonymous"
   />
+
+  <script lang="text/javascript">
+    let host = "{{ data.host }}";
+    let jsonObj = '{{{ json }}}';
+    let data = JSON.parse(jsonObj);
+    delete data.json;
+    let tool = "curl";
+    let commandBox, widgetBox, compositePath, commandStr;
+    let path;
+    let ipQuery, portQuery;
+    let ipCheckBox, portCheckBox, portInput;
+    let ip = '';
+
+    window.onload = (event) => {
+      commandBox = document.getElementById('command');
+      widgetBox = document.getElementById('output');
+      ipCheckBox = document.getElementById('ipCheckBox');
+      portCheckBox = document.getElementById('portCheckBox');
+      portInput = document.getElementById('portInput');
+      reset();
+      setcommdStr();
+      changeInput("ip");
+    }
+
+    function reset() {
+      path = '';
+      ipQuery = '';
+      portQuery = '';
+    }
+
+    function setcommdStr() {
+      compositePath = `${path}${portQuery}${ipQuery}`;
+      commandStr = `${tool} ${host}/${compositePath}`;
+      commandBox.innerText = commandStr;
+    }
+
+    function changeInput(input, button) {
+      path = input;
+      portQuery = "";
+      portInput.classList.add("hidden");
+      switch (path) {
+        case "json":
+          output.innerText = JSON.stringify(data.json);
+          break;
+        case "city":
+          output.innerText = data["geo_info"]["city"];
+          break;
+        case "country":
+          output.innerText = data["geo_info"]["country_name"];
+          break;
+        case "country-iso":
+          output.innerText = data["geo_info"]["country_iso"];
+          break;
+        case "port":
+          portInput.classList.remove("hidden");
+          path = "port";
+          output.innerText = "{}";
+          let currentPort = document.querySelector("#portInput").value;
+          updatePort(currentPort);
+          break
+        case "ip":
+          output.innerText = data["ip"];
+          path = "";
+          break
+        default:
+          output.innerText = data[path];
+      }
+      setcommdStr();
+
+      // set button selected
+      if (button) {
+        allButtons = document.querySelectorAll(('button.selected'));
+        allButtons.forEach((btn) => {
+          btn.classList.remove("selected")
+        })
+
+        button.classList.add("selected");
+      }
+    }
+
+    function navigate(event) {
+      console.log("navigate", compositePath);
+      window.location = compositePath;
+    }
+
+    function updatePort(value) {
+      port = value;
+      portQuery = `/${port}`;
+      setcommdStr();
+    }
+
+    function updateIP(value) {
+      ip = value;
+      ipQuery = `?ip=${ip}`;
+      setcommdStr();
+      changeInput("ip", null);
+    }
+  </script>
+
+  <style>
+    html,
+    .pure-g [class*="pure-u"] {
+      background-color: white;
+      font-family: "Open Sans", sans-serif;
+    }
+
+    pre {
+      font-family: "Monaco", "Menlo", "Consolas", "Courier New", monospace;
+      white-space: pre-wrap; /* Since CSS 2.1 */
+      white-space: -moz-pre-wrap; /* Mozilla, since 1999 */
+      white-space: -pre-wrap; /* Opera 4-6 */
+      white-space: -o-pre-wrap; /* Opera 7 */
+      word-wrap: break-word;
+    }
+
+    a {
+      /* background: #e3e3e3; */
+      text-decoration: underline;
+      color: #000;
+    }
+
+    a:hover, a:active {
+      background: #d7d7d7;
+    }
+
+    .ip {
+      border: 1px solid #cbcbcb;
+      background: #f2f2f2;
+      font-size: 36px;
+      padding: 6px;
+      word-wrap: break-word;
+    }
+
+    svg.github-corner {
+      fill: #151513;
+      color: #fff;
+    }
+
+    .footer {
+      margin-top: 34px;
+      border-top: 1px solid #cbcbcb;
+    }
+
+    .content {
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 1em;
+      padding-right: 1em;
+      max-width: 1024px;
+    }
+
+    .center {
+      justify-content: center;
+    }
+
+    .info-table td,
+    .info-table th {
+      padding: 5px;
+      border: 2px solid #ababab;
+      word-wrap: break-word;
+    }
+
+    .info-table th[scope="row"] {
+      background-color: #d5d5d5;
+      text-align: left;
+    }
+
+    .widgetbox {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid grey;
+      font-family: "Courier New", Courier, monospace;
+      margin-top: 0.5rem;
+      box-sizing: border-box;
+    }
+
+    .widgetbox.input :first-child::before {
+      content: "$ ";
+      white-space: pre;
+    }
+
+    .widgetbox.output {
+      min-height: 4em;
+      white-space: pre;
+      overflow-x: scroll;
+    }
+
+    .l-box {
+      margin: 0 1rem;
+    }
+
+    .align-right {
+      text-align: right;
+    }
+
+    .medium-input {
+      width: 10em;
+    }
+
+    button.selected {
+      background-color: rgb(208 208 208);
+    }
+
+    .input-buttons {
+      line-height: 2.6em;
+      font-size: smaller;
+    }
+
+    /* DARK MODE OVERRIDES */
+    @media (prefers-color-scheme: dark) {
+      html,
+      .pure-g [class*="pure-u"],
+      a {
+        background-color: #161719;
+        color: #d8d9da;
+      }
+
+      .ip {
+        border: 1px solid #313233;
+        background: #212223;
+      }
+
+      .footer {
+        color: #8e8e8e !important;
+        border-top: 1px solid #313233;
+      }
+
+      a:hover, a:active {
+        background: #3d3e3f;
+      }
+
+      svg.github-corner {
+        fill: #f8f9fa;
+        color: #161719;
+      }
+
+      .info-table th[scope="row"] {
+        background-color: #2e2e2e;
+        color: rgb(220, 220, 220);
+        text-align: left;
+      }
+
+      .pure-button {
+        background-color: #2e2e2e;
+        color: rgb(220, 220, 220);
+      }
+
+      .pure-button.selected {
+        background-color: rgb(125 125 125);
+      }
+
+      .pure-input {
+        background-color: #e6e6e6;
+        color: #666;
+      }
+
+      .pure-input::placeholder {
+        color: #bbb;
+      }
+    }
+  </style>
 </head>
 <body>
 <div class="content">
   <div class="pure-g gutters center">
     <div class="pure-u-1 pure-u-md-2-3">
       <div class="l-box">
-        <h1>What is my ip address?</h1>
-        <p><code class="ip">ip goes here.</code></p>
+        <h1>{{ data.host }} — What is my ip address?</h1>
+        <p><code class="ip">{{ data.ip }}</code></p>
         <p>
           The best tool to find your own ip address, and information about
           it.
         </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="pure-g gutters center">
+    <!-- COLUMN 1 -->
+    <div class="pure-u-1 pure-u-md-1-2 col">
+      <div class="l-box">
+        <h2>What do we know about this ip address?</h2>
+        <table class="info-table">
+          <tr>
+            <th scope="row">ip&nbsp;address</th>
+            <td>{{ data.ip }}</td>
+          </tr>
+          <tr>
+            <th scope="row">ip&nbsp;address (decimal)</th>
+            <td>{{ data.decimal_ip }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Country</th>
+            <td>{{ data.geo_info.country_name }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Country (ISO code)</th>
+            <td>{{ data.geo_info.country_iso }}</td>
+          </tr>
+          <tr>
+            <th scope="row">In EU?</th>
+            <td>{{#if geo_info.country_in_eu}}true{{else}}false{{/if}}</td>
+          </tr>
+          <tr>
+            <th scope="row">Region</th>
+            <td>{{ data.geo_info.region }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Region&nbsp;code</th>
+            <td>{{ data.geo_info.region_code }}</td>
+          </tr>
+          {{#if data.geo_info.metro_code}}
+          <tr>
+            <th scope="row">Metro code</th>
+            <td>{{ data.geo_info.metro_code }}</td>
+          </tr>
+          {{/if}}
+          <tr>
+            <th scope="row">Postal&nbsp;code</th>
+            <td>{{ data.geo_info.postal_code }}</td>
+          </tr>
+          <tr>
+            <th scope="row">City</th>
+            <td>{{ data.geo_info.city }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Latitude</th>
+            <td>{{ data.geo_info.latitude }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Longitude</th>
+            <td>{{ data.geo_info.longitude }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Timezone</th>
+            <td>{{ data.geo_info.timezone }}</td>
+          </tr>
+          <tr>
+            <th scope="row">ASN</th>
+            <td>%% .ASN %%</td>
+          </tr>
+          <tr>
+            <th scope="row">ASN (organization)</th>
+            <td>%% .ASNOrg %%</td>
+          </tr>
+          <tr>
+            <th scope="row">Hostname</th>
+            <td>%% .Hostname %%</td>
+          </tr>
+          <tr>
+            <th scope="row">User&nbsp;agent</th>
+            <td>%% .UserAgent.Product %%/%% .UserAgent.Version %%</td>
+          </tr>
+          <tr>
+            <th scope="row">User&nbsp;agent: Comment</th>
+            <td>%% .UserAgent.Comment %%</td>
+          </tr>
+          <tr>
+            <th scope="row">User&nbsp;agent: Raw</th>
+            <td>%% .UserAgent.RawValue %%</td>
+          </tr>
+        </table>
+        <p>
+          This information is provided from the GeoLite2 database created by
+          MaxMind, available from
+          <a href="https://www.maxmind.com">www.maxmind.com</a>
+        </p>
+        <div class="pure-u-1 pure-u-md-1-1">
+          <h2>Map</h2>
+          <!--<iframe
+            width="100%"
+            height="350"
+            frameborder="0"
+            scrolling="no"
+            marginheight="0"
+            marginwidth="0"
+            src="https://www.openstreetmap.org/export/embed.html?bbox=%% .BoxLonLeft %%%2C%% .BoxLatBottom %%%2C%% .BoxLonRight %%%2C%% .BoxLatTop %%&amp;layer=mapnik&amp;marker=%% .Latitude %%%2C%% .Longitude %%"
+          ></iframe>-->
+        </div>
+      </div>
+    </div>
+    <!-- COLUMN 2 -->
+    <div class="pure-u-1 pure-u-md-1-2">
+      <div class="l-box">
+        <h2>How do I get this programmatically?</h2>
+        <p>
+          With the widget below you can build your query, and see what the
+          result will look like.
+        </p>
+        <div class="pure-form">
+          <!-- COMMAND WIDGET -->
+          <div class="input-buttons">
+            <button
+              name="ip"
+              class="pure-button widget-select"
+              onclick="changeInput(this.name, this)"
+            >
+              ip
+            </button>
+            <button
+              name="country"
+              class="pure-button widget-select"
+              onclick="changeInput(this.name, this)"
+            >
+              country
+            </button>
+            <button
+              name="country-iso"
+              class="pure-button widget-select"
+              onclick="changeInput(this.name, this)"
+            >
+              country-iso
+            </button>
+            <button
+              name="city"
+              class="pure-button widget-select"
+              onclick="changeInput(this.name, this)"
+            >
+              city
+            </button>
+            <button
+              name="asn"
+              class="pure-button widget-select"
+              onclick="changeInput(this.name, this)"
+            >
+              asn
+            </button>
+            <button
+              name="json"
+              class="pure-button widget-select"
+              onclick="changeInput(this.name, this)"
+            >
+              json
+            </button>
+            <button
+              name="port"
+              class="pure-button widget-select"
+              onclick="changeInput(this.name, this)"
+            >
+              port
+            </button>
+            <input
+              id="portInput"
+              type="number"
+              min="1"
+              max="40000"
+              value="8080"
+              class="narrow-input pure-input"
+              placeholder="8080"
+              onchange="updatePort(this.value)"
+            />
+          </div>
+          <div class="widgetbox input">
+            <code id="command"></code>
+          </div>
+          <div id="output" class="widgetbox output"></div>
+
+          <form class="pure-form input-buttons">
+            <fieldset>
+              <label for="ipInput">
+                Check another ip (optional)
+                <input
+                  id="ipInput"
+                  class=""
+                  type="text"
+                  placeholder="ip to query"
+                  onkeyup="updateIP(this.value)"
+                />
+              </label>
+              <button
+                type="button"
+                class="pure-button"
+                onclick="navigate()"
+              >
+                Open
+              </button>
+            </fieldset>
+          </form>
+        </div>
+
+        <!-- FAQ -->
+        <div class="FAQ">
+          <h2>FAQ</h2>
+          <h3>How do I force IPv4 or IPv6 lookup?</h3>
+          <p>
+            As of 2018-07-25 it's no longer possible to force protocol using
+            the
+            <i>v4</i> and <i>v6</i> subdomains. IPv4 or IPv6 still can be
+            forced by passing the appropriate flag to your client, e.g
+            <code>curl -4</code> or <code>curl -6</code>.
+          </p>
+          <h3>Can I force getting JSON?</h3>
+          <p>
+            Setting the <code>Accept: application/json</code> header works
+            as expected.
+          </p>
+
+          <h3>Is automated use of this service permitted?</h3>
+          <p>
+            Yes, as long as the rate limit is respected. The rate limit is
+            in place to ensure a fair service for all.
+          </p>
+          <p>
+            <em>Please limit automated requests to 1 request per minute</em
+            >. No guarantee is made for requests that exceed this limit.
+            They may be rate-limited, with a 429 status code, or dropped
+            entirely.
+          </p>
+
+          <h3>Can I run my own service?</h3>
+          <p>
+            Yes, the source code and documentation is available on
+            <a href="https://github.com/mpolden/echoip">GitHub</a>.
+          </p>
+        </div>
       </div>
     </div>
   </div>
