@@ -1,8 +1,8 @@
-use maxminddb::{geoip2, Reader};
+use maxminddb::{geoip2, Reader, geoip2::model::Subdivision};
 use std::net::IpAddr;
 
+use crate::error::EchoIpError;
 use crate::model::GeoInfo;
-use maxminddb::geoip2::model::Subdivision;
 
 pub struct GeoipLookup {
   city_reader: Reader<Vec<u8>>
@@ -15,8 +15,8 @@ impl GeoipLookup {
     }
   }
 
-  pub(crate) fn lookup_geo_for_ip(&self, _ip: IpAddr) -> GeoInfo {
-    let geoip_city: geoip2::City = self.city_reader.lookup(_ip).unwrap();
+  pub fn lookup_geo_for_ip(&self, _ip: IpAddr) -> Result<GeoInfo, EchoIpError> {
+    let geoip_city: geoip2::City = self.city_reader.lookup::<geoip2::City>(_ip).map_err(|e| EchoIpError::new(e.to_string()))?;
 
     let _country = geoip_city.country.unwrap();
     let _region: Subdivision = geoip_city.subdivisions.unwrap().iter().next().unwrap().clone();
@@ -37,7 +37,7 @@ impl GeoipLookup {
     let longitude = _location.longitude.unwrap();
     let timezone = String::from(_location.time_zone.unwrap().to_owned());
 
-    GeoInfo {
+    Ok(GeoInfo {
       country_name,
       country_iso,
       country_in_eu: _country.is_in_european_union.unwrap_or(false),
@@ -49,6 +49,6 @@ impl GeoipLookup {
       latitude,
       longitude,
       timezone,
-    }
+    })
   }
 }
