@@ -3,7 +3,7 @@ mod model;
 mod util;
 mod error;
 
-use actix_web::{http, web, App, HttpServer, middleware::Logger, middleware::errhandlers::ErrorHandlers};
+use actix_web::{web, App, HttpServer, middleware::Logger};
 use handlebars::Handlebars;
 use log::debug;
 
@@ -29,11 +29,11 @@ async fn main() -> std::io::Result<()> {
     App::new()
       .app_data(handlebars_ref.clone())
       .wrap(Logger::default())
-      .wrap(ErrorHandlers::new()
+      /*.wrap(ErrorHandlers::new()
         .handler(
           http::StatusCode::INTERNAL_SERVER_ERROR,
           api::internal_server_error,
-        ))
+        ))*/
       .service(web::resource("/").route(web::get().to(index)))
   })
     .bind("localhost:8088")?

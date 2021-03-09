@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, HttpRequest, Error, web, dev, Result};
+use actix_web::{HttpResponse, HttpRequest, web, dev, Result};
 use actix_web::middleware::errhandlers::{ErrorHandlerResponse};
 use handlebars::Handlebars;
 use log::debug;
@@ -9,6 +9,7 @@ use std::str::FromStr;
 use crate::model::Index;
 use crate::util;
 use actix_files::NamedFile;
+use crate::error::EchoIpError;
 
 fn ip_to_decimal(ip: IpAddr) -> String {
   match ip {
@@ -17,10 +18,15 @@ fn ip_to_decimal(ip: IpAddr) -> String {
   }
 }
 
-pub(crate) async fn index(req: HttpRequest, hb: web::Data<Handlebars<'_>>) -> Result<HttpResponse, Error> {
+pub(crate) async fn index(req: HttpRequest, hb: web::Data<Handlebars<'_>>) -> Result<HttpResponse, EchoIpError<'_>> {
   let _conn_info = req.connection_info();
-  let _realip = _conn_info.realip_remote_addr().unwrap();
-  let _ipaddr = SocketAddr::from_str(_realip).unwrap().ip();
+  let _realip = _conn_info.realip_remote_addr();
+  let _realip = match _realip {
+    Some(ip) => ip,
+    None => return Err(EchoIpError::new("No remote IP found for connection."))
+  };
+
+  let _ipaddr = SocketAddr::from_str(_realip)?.ip();
   debug!("IP from client: {:#?}", _ipaddr);
 
   let lookup: util::GeoipLookup = util::GeoipLookup::new();
@@ -35,16 +41,21 @@ pub(crate) async fn index(req: HttpRequest, hb: web::Data<Handlebars<'_>>) -> Re
     json: Default::default(),
   };
 
+  debug!("Converting response to JSON.");
   let response = json!({
     "data": data,
     "json": serde_json::to_string(&data).unwrap()
   });
 
-  let body = hb.render("index", &response).unwrap();
+  debug!("Rendering Handlebars template.");
+  let body = hb.render("index", &response).map_err(EchoIpError::new("Could not render template."))?;
+
+  debug!("Returning response to browser.");
   Ok(HttpResponse::Ok().body(body))
 }
 
 pub fn internal_server_error<B>(res: dev::ServiceResponse<B>) -> Result<ErrorHandlerResponse<B>> {
+  // debug!("Error! {:#?}", res.);
   let new_resp = NamedFile::open("static/errors/500.html")?
     .set_status_code(res.status())
     .into_response(res.request())?;

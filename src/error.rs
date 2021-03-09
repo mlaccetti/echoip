@@ -4,17 +4,17 @@ use error::ResponseError;
 
 #[derive(Debug, Display, Error)]
 #[display(fmt = "Error: {}", message)]
-pub struct EchoIpError {
-  message: String,
+pub struct EchoIpError<'a> {
+  message: &'a str,
 }
 
-impl EchoIpError {
-  pub fn new(msg: String) -> EchoIpError {
+impl EchoIpError<'_> {
+  pub fn new(msg: &str) -> EchoIpError {
     EchoIpError{message: msg}
   }
 }
 
-impl ResponseError for EchoIpError {
+impl ResponseError for EchoIpError<'_> {
   fn status_code(&self) -> StatusCode {
     StatusCode::INTERNAL_SERVER_ERROR
   }
