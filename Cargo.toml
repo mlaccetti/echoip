@@ -10,16 +10,12 @@ name = "echoip"
 path = "src/main.rs"
 
 [dependencies]
-actix-files = "0.5.0"
-actix-web = "3.3.2"
-derive_more = "0.99.11"
-env_logger = "0.8.3"
-handlebars = { version = "3.5.3", features = ["dir_source"] }
-lazy_static = "1.4.0"
+env_logger = "0.9.0"
 log = "0.4.14"
-maxminddb = "0.17.2"
-serde = { version = "1.0.124", features = ["derive"] }
-serde_json = "1.0.64"
-
-[build-dependencies]
-askama = "0.10.5"
+maxminddb = "0.21.0"
+rocket = "0.5.0-rc.1"
+rocket_dyn_templates = { version = "0.1.0-rc.1", features = ["handlebars"] }
+serde = "=1.0.130"
+serde_derive = "1.0.130"
+serde_json = "=1.0.67"
+thiserror = "=1.0.29"

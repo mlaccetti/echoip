@@ -1,54 +1,77 @@
-use maxminddb::{geoip2, Reader, geoip2::model::Subdivision};
+use crate::model::GeoInfo;
+use maxminddb::{geoip2, geoip2::model::Subdivision, Reader};
+use std::io::Error;
 use std::net::IpAddr;
 
-use crate::error::EchoIpError;
-use crate::model::GeoInfo;
-
 pub struct GeoipLookup {
-  city_reader: Reader<Vec<u8>>
+    city_reader: Reader<Vec<u8>>,
 }
 
 impl GeoipLookup {
-  pub fn new() -> GeoipLookup {
-    GeoipLookup {
-      city_reader: Reader::open_readfile("geoip/GeoLite2-City.mmdb").unwrap(),
+    pub fn new() -> GeoipLookup {
+        GeoipLookup {
+            city_reader: Reader::open_readfile("geoip/GeoLite2-City.mmdb").unwrap(),
+        }
     }
-  }
 
-  pub fn lookup_geo_for_ip(&self, _ip: IpAddr) -> Result<GeoInfo, EchoIpError> {
-    let geoip_city: geoip2::City = self.city_reader.lookup::<geoip2::City>(_ip).map_err(|e| EchoIpError::new(e.to_string()))?;
+    pub fn lookup_geo_for_ip(&self, _ip: IpAddr) -> Result<GeoInfo, Error> {
+        let geoip_city: geoip2::City = self.city_reader.lookup::<geoip2::City>(_ip)?;
 
-    let _country = geoip_city.country.unwrap();
-    let _region: Subdivision = geoip_city.subdivisions.unwrap().iter().next().unwrap().clone();
-    let _location = geoip_city.location.unwrap();
+        let _country = geoip_city.country.unwrap();
+        let _region: Subdivision = geoip_city
+            .subdivisions
+            .unwrap()
+            .iter()
+            .next()
+            .unwrap()
+            .clone();
+        let _location = geoip_city.location.unwrap();
 
-    let country_name = String::from(_country.names.unwrap().get("en").unwrap().to_owned());
-    let country_iso = String::from(_country.iso_code.unwrap().to_owned());
-    let city = String::from(geoip_city.city.unwrap().names.unwrap().get("en").unwrap().to_owned());
+        let country_name = String::from(_country.names.unwrap().get("en").unwrap().to_owned());
+        let country_iso = String::from(_country.iso_code.unwrap().to_owned());
+        let city = String::from(
+            geoip_city
+                .city
+                .unwrap()
+                .names
+                .unwrap()
+                .get("en")
+                .unwrap()
+                .to_owned(),
+        );
 
-    let region = String::from(_region.names.unwrap().get("en").unwrap().to_owned());
-    let region_code = String::from(_region.iso_code.unwrap().to_owned());
+        let region = String::from(_region.names.unwrap().get("en").unwrap().to_owned());
+        let region_code = String::from(_region.iso_code.unwrap().to_owned());
 
-    let metro_code = _location.metro_code.unwrap_or(0).to_owned();
+        let metro_code = _location.metro_code.unwrap_or(0).to_owned();
 
-    let postal_code = String::from(geoip_city.postal.unwrap().code.iter().next().unwrap().to_owned());
+        let postal_code = String::from(
+            geoip_city
+                .postal
+                .unwrap()
+                .code
+                .iter()
+                .next()
+                .unwrap()
+                .to_owned(),
+        );
 
-    let latitude = _location.latitude.unwrap();
-    let longitude = _location.longitude.unwrap();
-    let timezone = String::from(_location.time_zone.unwrap().to_owned());
+        let latitude = _location.latitude.unwrap();
+        let longitude = _location.longitude.unwrap();
+        let timezone = String::from(_location.time_zone.unwrap().to_owned());
 
-    Ok(GeoInfo {
-      country_name,
-      country_iso,
-      country_in_eu: _country.is_in_european_union.unwrap_or(false),
-      region,
-      region_code,
-      city,
-      metro_code,
-      postal_code,
-      latitude,
-      longitude,
-      timezone,
-    })
-  }
+        Ok(GeoInfo {
+            country_name,
+            country_iso,
+            country_in_eu: _country.is_in_european_union.unwrap_or(false),
+            region,
+            region_code,
+            city,
+            metro_code,
+            postal_code,
+            latitude,
+            longitude,
+            timezone,
+        })
+    }
 }
