@@ -16,12 +16,12 @@ pub struct GeoInfo {
   pub(crate) timezone: String,
 }
 
-pub struct UserInfo {
+/*pub struct UserInfo {
   pub(crate) hostname: String,
   pub(crate) user_agent: String,
   pub(crate) user_agent_comment: String,
   pub(crate) user_agent_raw: String,
-}
+}*/
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Index {

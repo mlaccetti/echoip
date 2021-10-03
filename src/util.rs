@@ -11,12 +11,12 @@ pub struct GeoipLookup {
 impl GeoipLookup {
   pub fn new() -> GeoipLookup {
     GeoipLookup {
-      city_reader: Reader::open_readfile("geoip/GeoLite2-City.mmdb").unwrap(),
+      city_reader: Reader::open_readfile("./geoip/GeoLite2-City.mmdb").unwrap(),
     }
   }
 
   pub fn lookup_geo_for_ip(&self, _ip: IpAddr) -> Result<GeoInfo, EchoIpError> {
-    let geoip_city: geoip2::City = self.city_reader.lookup::<geoip2::City>(_ip).map_err(|e| EchoIpError::new(e.to_string()))?;
+    let geoip_city: geoip2::City = self.city_reader.lookup::<geoip2::City>(_ip).map_err(|_| EchoIpError::MaxMindDbFailed)?;
 
     let _country = geoip_city.country.unwrap();
     let _region: Subdivision = geoip_city.subdivisions.unwrap().iter().next().unwrap().clone();

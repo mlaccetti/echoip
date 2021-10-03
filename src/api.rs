@@ -18,15 +18,15 @@ fn ip_to_decimal(ip: IpAddr) -> String {
   }
 }
 
-pub(crate) async fn index(req: HttpRequest, hb: web::Data<Handlebars<'_>>) -> Result<HttpResponse, EchoIpError<'_>> {
+pub(crate) async fn index(req: HttpRequest, hb: web::Data<Handlebars<'_>>) -> Result<HttpResponse, EchoIpError> {
   let _conn_info = req.connection_info();
   let _realip = _conn_info.realip_remote_addr();
   let _realip = match _realip {
     Some(ip) => ip,
-    None => return Err(EchoIpError::new("No remote IP found for connection."))
+    None => return Err(EchoIpError::IpAddressResolutionFailed)
   };
 
-  let _ipaddr = SocketAddr::from_str(_realip)?.ip();
+  let _ipaddr = SocketAddr::from_str(_realip).map_err(|_| EchoIpError::IpAddressResolutionFailed)?.ip();
   debug!("IP from client: {:#?}", _ipaddr);
 
   let lookup: util::GeoipLookup = util::GeoipLookup::new();
@@ -48,7 +48,7 @@ pub(crate) async fn index(req: HttpRequest, hb: web::Data<Handlebars<'_>>) -> Re
   });
 
   debug!("Rendering Handlebars template.");
-  let body = hb.render("index", &response).map_err(EchoIpError::new("Could not render template."))?;
+  let body = hb.render("index", &response).map_err(|_|EchoIpError::HandlebarsFailed)?;
 
   debug!("Returning response to browser.");
   Ok(HttpResponse::Ok().body(body))

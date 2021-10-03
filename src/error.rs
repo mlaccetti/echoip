@@ -1,27 +1,38 @@
-use actix_web::{dev::HttpResponseBuilder, error, http::header, http::StatusCode, HttpResponse};
-use derive_more::{Display, Error};
-use error::ResponseError;
+use derive_more::Display;
+use actix_web::{ResponseError, HttpResponse};
 
-#[derive(Debug, Display, Error)]
-#[display(fmt = "Error: {}", message)]
-pub struct EchoIpError<'a> {
-  message: &'a str,
+#[derive(Debug, Display)]
+pub enum EchoIpError {
+  /// Represents an empty source. For example, an empty text file being given
+  /// as input to `count_words()`.
+  #[display(fmt="IP address could not be resolved")]
+  IpAddressResolutionFailed,
+
+  #[display(fmt="Could not compile Handlebars template")]
+  HandlebarsFailed,
+
+  #[display(fmt="Could not get IP information from Max Mind DB")]
+  MaxMindDbFailed,
 }
 
-impl EchoIpError<'_> {
-  pub fn new(msg: &str) -> EchoIpError {
-    EchoIpError{message: msg}
-  }
-}
-
-impl ResponseError for EchoIpError<'_> {
-  fn status_code(&self) -> StatusCode {
-    StatusCode::INTERNAL_SERVER_ERROR
-  }
-
+/// Actix web uses `ResponseError` for conversion of errors to a response
+impl ResponseError for EchoIpError {
   fn error_response(&self) -> HttpResponse {
-    HttpResponseBuilder::new(self.status_code())
-      .set_header(header::CONTENT_TYPE, "text/html; charset=utf-8")
-      .body(self.to_string())
+    match self {
+      EchoIpError::IpAddressResolutionFailed => {
+        println!("IP Address resolution failed");
+        HttpResponse::InternalServerError().finish()
+      }
+
+      EchoIpError::HandlebarsFailed => {
+        println!("Handlebars template compilation failed");
+        HttpResponse::InternalServerError().finish()
+      }
+
+      EchoIpError::MaxMindDbFailed => {
+        println!("IP to location resolution failed");
+        HttpResponse::InternalServerError().finish()
+      }
+    }
   }
 }
