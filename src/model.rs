@@ -14,14 +14,17 @@ pub struct GeoInfo {
   pub(crate) latitude: f64,
   pub(crate) longitude: f64,
   pub(crate) timezone: String,
+  pub(crate) asn: String,
+  pub(crate) asn_org: String,
 }
 
-/*pub struct UserInfo {
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct UserInfo {
   pub(crate) hostname: String,
   pub(crate) user_agent: String,
   pub(crate) user_agent_comment: String,
   pub(crate) user_agent_raw: String,
-}*/
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Index {
@@ -29,5 +32,6 @@ pub struct Index {
   pub(crate) ip: String,
   pub(crate) decimal_ip: String,
   pub(crate) geo_info: GeoInfo,
+  pub(crate) user_info: UserInfo,
   pub(crate) json: Value,
 }

@@ -5,18 +5,21 @@ use crate::error::EchoIpError;
 use crate::model::GeoInfo;
 
 pub struct GeoipLookup {
-  city_reader: Reader<Vec<u8>>
+  city_reader: Reader<Vec<u8>>,
+  asn_reader: Reader<Vec<u8>>
 }
 
 impl GeoipLookup {
   pub fn new() -> Self {
     Self {
       city_reader: Reader::open_readfile("./geoip/GeoLite2-City.mmdb").unwrap(),
+      asn_reader: Reader::open_readfile("./geoip/GeoLite2-ASN.mmdb").unwrap(),
     }
   }
 
   pub fn lookup_geo_for_ip(&self, _ip: IpAddr) -> Result<GeoInfo, EchoIpError> {
     let geoip_city: geoip2::City = self.city_reader.lookup::<geoip2::City>(_ip).map_err(|err| EchoIpError::MaxMindDbFailed { source: err })?;
+    let geoip_asn: geoip2::Asn = self.asn_reader.lookup::<geoip2::Asn>(_ip).map_err(|err|EchoIpError::MaxMindDbFailed { source: err })?;
 
     // TODO if the IP cannot be found, insert some dummy data, or redirect to a different page?
 
@@ -39,6 +42,9 @@ impl GeoipLookup {
     let longitude = _location.longitude.unwrap();
     let timezone = String::from(_location.time_zone.unwrap().to_owned());
 
+    let asn = geoip_asn.autonomous_system_number.unwrap().to_string();
+    let asn_org = geoip_asn.autonomous_system_organization.unwrap().to_string();
+
     Ok(GeoInfo {
       country_name,
       country_iso,
@@ -51,6 +57,8 @@ impl GeoipLookup {
       latitude,
       longitude,
       timezone,
+      asn,
+      asn_org,
     })
   }
 }
