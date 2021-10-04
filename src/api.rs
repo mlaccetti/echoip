@@ -3,8 +3,7 @@ use actix_web::middleware::errhandlers::{ErrorHandlerResponse};
 use handlebars::Handlebars;
 use log::debug;
 use serde_json::json;
-use std::net::{IpAddr, SocketAddr};
-use std::str::FromStr;
+use std::net::IpAddr;
 
 use crate::model::Index;
 use crate::util;
@@ -23,10 +22,12 @@ pub(crate) async fn index(req: HttpRequest, hb: web::Data<Handlebars<'_>>) -> Re
   let _realip = _conn_info.realip_remote_addr();
   let _realip = match _realip {
     Some(ip) => ip,
-    None => return Err(EchoIpError::IpAddressResolutionFailed)
+    None => return Err(EchoIpError::RemoteIpNotAvailable)
   };
 
-  let _ipaddr = SocketAddr::from_str(_realip).map_err(|_| EchoIpError::IpAddressResolutionFailed)?.ip();
+  debug!("Converting IP {} to socket address.", _realip);
+
+  let _ipaddr = _realip.parse::<IpAddr>().map_err(|err| EchoIpError::IpAddressResolutionFailed { source: err })?;
   debug!("IP from client: {:#?}", _ipaddr);
 
   let lookup: util::GeoipLookup = util::GeoipLookup::new();
@@ -48,7 +49,7 @@ pub(crate) async fn index(req: HttpRequest, hb: web::Data<Handlebars<'_>>) -> Re
   });
 
   debug!("Rendering Handlebars template.");
-  let body = hb.render("index", &response).map_err(|_|EchoIpError::HandlebarsFailed)?;
+  let body = hb.render("index", &response).map_err(|_| EchoIpError::HandlebarsFailed)?;
 
   debug!("Returning response to browser.");
   Ok(HttpResponse::Ok().body(body))
