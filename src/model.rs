@@ -16,6 +16,10 @@ pub struct GeoInfo {
   pub(crate) timezone: String,
   pub(crate) asn: String,
   pub(crate) asn_org: String,
+  pub(crate) box_lat_top: f64,
+  pub(crate) box_lat_bottom: f64,
+  pub(crate) box_lon_left: f64,
+  pub(crate) box_lon_right: f64,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -31,7 +35,8 @@ pub struct Index {
   pub(crate) host: String,
   pub(crate) ip: String,
   pub(crate) decimal_ip: String,
-  pub(crate) geo_info: GeoInfo,
-  pub(crate) user_info: UserInfo,
+  pub(crate) has_geo_info: bool,
+  pub(crate) geo_info: Option<GeoInfo>,
+  pub(crate) user_info: Option<UserInfo>,
   pub(crate) json: Value,
 }

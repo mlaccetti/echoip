@@ -59,6 +59,10 @@ impl GeoipLookup {
       timezone,
       asn,
       asn_org,
+      box_lat_top: latitude + 0.05,
+      box_lat_bottom: latitude - 0.05,
+      box_lon_left: longitude - 0.05,
+      box_lon_right: longitude + 0.05,
     })
   }
 }

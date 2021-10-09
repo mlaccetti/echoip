@@ -309,102 +309,126 @@
       <div class="l-box">
         <h2>What do we know about this ip address?</h2>
         <table class="info-table">
+          {{#if data.ip}}
           <tr>
             <th scope="row">ip&nbsp;address</th>
             <td>{{ data.ip }}</td>
           </tr>
+          {{/if}}
+          {{#if data.decimal_ip}}
           <tr>
             <th scope="row">ip&nbsp;address (decimal)</th>
             <td>{{ data.decimal_ip }}</td>
           </tr>
+          {{/if}}
+          {{#if data.geo_info.country_name}}
           <tr>
             <th scope="row">Country</th>
             <td>{{ data.geo_info.country_name }}</td>
           </tr>
+          {{/if}}
+          {{#if data.geo_info.country_iso}}
           <tr>
             <th scope="row">Country (ISO code)</th>
             <td>{{ data.geo_info.country_iso }}</td>
           </tr>
+          {{/if}}
+          {{#if data.geo_info.country_in_eu}}
           <tr>
             <th scope="row">In EU?</th>
-            <td>{{#if geo_info.country_in_eu}}true{{else}}false{{/if}}</td>
+            <td>{{#if data.geo_info.country_in_eu}}true{{else}}false{{/if}}</td>
           </tr>
+          {{/if}}
+          {{#if data.geo_info.region}}
           <tr>
             <th scope="row">Region</th>
             <td>{{ data.geo_info.region }}</td>
           </tr>
+          {{/if}}
+          {{#if data.geo_info.region_code}}
           <tr>
             <th scope="row">Region&nbsp;code</th>
             <td>{{ data.geo_info.region_code }}</td>
           </tr>
+          {{/if}}
           {{#if data.geo_info.metro_code}}
           <tr>
             <th scope="row">Metro code</th>
             <td>{{ data.geo_info.metro_code }}</td>
           </tr>
           {{/if}}
+          {{#if data.geo_info.postal_code}}
           <tr>
             <th scope="row">Postal&nbsp;code</th>
             <td>{{ data.geo_info.postal_code }}</td>
           </tr>
+          {{/if}}
+          {{#if data.geo_info.city}}
           <tr>
             <th scope="row">City</th>
             <td>{{ data.geo_info.city }}</td>
           </tr>
+          {{/if}}
+          {{#if data.geo_info.latitude}}
           <tr>
             <th scope="row">Latitude</th>
             <td>{{ data.geo_info.latitude }}</td>
           </tr>
+          {{/if}}
+          {{#if data.geo_info.longitude}}
           <tr>
             <th scope="row">Longitude</th>
             <td>{{ data.geo_info.longitude }}</td>
           </tr>
+          {{/if}}
+          {{#if data.geo_info.longitude}}
           <tr>
             <th scope="row">Timezone</th>
-            <td>{{ data.geo_info.timezone }}</td>
+            <td>{{ data.geo_info.longitude }}</td>
           </tr>
+          {{/if}}
+          {{#if data.geo_info.asn}}
           <tr>
             <th scope="row">ASN</th>
             <td>{{ data.geo_info.asn }}</td>
           </tr>
+          {{/if}}
+          {{#if data.geo_info.asn_org}}
           <tr>
             <th scope="row">ASN (organization)</th>
             <td>{{ data.geo_info.asn_org }}</td>
           </tr>
+          {{/if}}
+          {{#if data.user_info.hostname}}
           <tr>
             <th scope="row">Hostname</th>
             <td>{{ data.user_info.hostname }}</td>
           </tr>
+          {{/if}}
+          {{#if data.user_info.user_agent}}
           <tr>
             <th scope="row">User&nbsp;agent</th>
             <td>{{ data.user_info.user_agent }}</td>
           </tr>
+          {{/if}}
+          {{#if data.user_info.user_agent_comment}}
           <tr>
             <th scope="row">User&nbsp;agent: Comment</th>
             <td>{{ data.user_info.user_agent_comment }}</td>
           </tr>
+          {{/if}}
+          {{#if data.user_info.user_agent_raw}}
           <tr>
             <th scope="row">User&nbsp;agent: Raw</th>
             <td>{{ data.user_info.user_agent_raw }}</td>
           </tr>
+          {{/if}}
         </table>
         <p>
           This information is provided from the GeoLite2 database created by
           MaxMind, available from
           <a href="https://www.maxmind.com">www.maxmind.com</a>
         </p>
-        <div class="pure-u-1 pure-u-md-1-1">
-          <h2>Map</h2>
-          <!--<iframe
-            width="100%"
-            height="350"
-            frameborder="0"
-            scrolling="no"
-            marginheight="0"
-            marginwidth="0"
-            src="https://www.openstreetmap.org/export/embed.html?bbox=%% .BoxLonLeft %%%2C%% .BoxLatBottom %%%2C%% .BoxLonRight %%%2C%% .BoxLatTop %%&amp;layer=mapnik&amp;marker=%% .Latitude %%%2C%% .Longitude %%"
-          ></iframe>-->
-        </div>
       </div>
     </div>
     <!-- COLUMN 2 -->
@@ -505,6 +529,21 @@
             </fieldset>
           </form>
         </div>
+
+        {{#if data.geo_info.latitude }}
+        <div class="pure-u-1 pure-u-md-1-1">
+          <h2>Map</h2>
+          <iframe
+            width="100%"
+            height="350"
+            frameborder="0"
+            scrolling="no"
+            marginheight="0"
+            marginwidth="0"
+            src="https://www.openstreetmap.org/export/embed.html?bbox={{ data.geo_info.box_lon_left }}%2C{{ data.geo_info.box_lat_bottom }}%2C{{ data.geo_info.box_lon_right }}%2C{{ data.geo_info.box_lat_top }}&amp;layer=mapnik&amp;marker={{ data.geo_info.latitude }}%2C{{ data.geo_info.longitude }}"
+          ></iframe>
+        </div>
+        {{/if}}
 
         <!-- FAQ -->
         <div class="FAQ">
