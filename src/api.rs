@@ -19,6 +19,27 @@ fn ip_to_decimal(ip: IpAddr) -> String {
   }
 }
 
+/***
+* Possible IPs that we've seen so far:
+* [::1]:51224
+* 127.0.0.1:47324
+* IPv4/v6 without trailing ports
+ */
+fn clean_ip(mut ip: String) -> String {
+  let pos = ip.rfind(':');
+  if pos.is_some() {
+    debug!("Removing trailing colon from IP.");
+    ip = ip.split_at(pos.unwrap() - 1).0.to_string();
+  }
+
+  debug!("Removing square braces from IP.");
+  ip = ip.replace(&['[', ']'][..], "");
+
+  debug!("Cleaned IP: {}", ip);
+
+  ip
+}
+
 fn get_user_info(req: &HttpRequest, ip: &IpAddr) -> UserInfo {
   let user_agent_raw: String = req.headers().get("User-Agent").unwrap().to_str().unwrap().to_string();
   debug!("Raw user agent [ {} ] for {}", user_agent_raw, ip.to_string());
@@ -42,8 +63,10 @@ fn get_user_info(req: &HttpRequest, ip: &IpAddr) -> UserInfo {
 pub(crate) async fn index(_req: HttpRequest, _hb: web::Data<Handlebars<'_>>) -> Result<HttpResponse, EchoIpError> {
   let _accept = _req.headers().get("Accept");
   if _accept.is_some() {
-    let _accept = _accept.unwrap();
-    if !_accept.is_empty() && _accept.to_str().unwrap().contains("text/plain") {
+    let _accept: String = _accept.unwrap().to_str().unwrap().to_string();
+    debug!("Incoming content type: {}", _accept);
+    if _accept.contains("text/plain") || _accept.eq("*/*") {
+      debug!("Redirecting to plain response.");
       let res: HttpResponse = plain_response(_req);
       return Ok(res);
     }
@@ -51,48 +74,38 @@ pub(crate) async fn index(_req: HttpRequest, _hb: web::Data<Handlebars<'_>>) -> 
 
   let _conn_info = _req.connection_info();
   let _realip = _conn_info.realip_remote_addr();
-  let _realip = match _realip {
-    Some(ip) => ip.splitn(2, ":").nth(0).unwrap(),
-    None => ""
-  };
-  debug!("IP from the client: {}", _realip);
-
-  let _has_ip_info: bool = _realip != "";
-  debug!("We got an IP from the client: {}", _has_ip_info);
+  let _realip = clean_ip(_realip.unwrap().to_string());
 
   let mut _ipaddr: IpAddr = IpAddr::from_str("127.0.0.1").unwrap();
 
   let mut geo_info: Option<GeoInfo> = None;
   let mut user_info: Option<UserInfo> = None;
 
-  if _has_ip_info {
-    debug!("Converting IP {} to IpAddr.", _realip);
-    let _parsed_ip = _realip.parse::<IpAddr>();
-    if _parsed_ip.is_ok() {
-      debug!("Converted IP {} properly, getting GeoIP info.", _realip);
-      _ipaddr = _parsed_ip.unwrap();
-      let lookup: util::GeoipLookup = util::GeoipLookup::new();
+  debug!("Converting IP {} to IpAddr.", _realip);
+  let _parsed_ip = _realip.parse::<IpAddr>();
+  let _has_valid_ip = _parsed_ip.is_ok();
+  if _has_valid_ip {
+    debug!("Converted IP {} properly, getting GeoIP info.", _realip);
+    _ipaddr = _parsed_ip.unwrap();
+    let lookup: util::GeoipLookup = util::GeoipLookup::new();
 
-      let _geo_info = lookup.lookup_geo_for_ip(_ipaddr);
-      if _geo_info.is_ok() {
-        debug!("Collected GeoIP info for {}.", _realip);
-        geo_info = Some(_geo_info.unwrap());
-      } else {
-        warn!("Could not retrieve GeoIP info for {}.", _realip);
-      }
-
-      debug!("Getting user data for {}.", _realip);
-      user_info = Some(get_user_info(&_req, &_ipaddr));
+    let _geo_info = lookup.lookup_geo_for_ip(_ipaddr);
+    if _geo_info.is_ok() {
+      debug!("Collected GeoIP info for {}.", _realip);
+      geo_info = Some(_geo_info.unwrap());
     } else {
-      warn!("Could not convert {} to IpAddr, skipped looking up GeoIP/ user data.", _realip);
+      warn!("Could not retrieve GeoIP info for {}.", _realip);
     }
+
+    debug!("Getting user data for {}.", _realip);
+    user_info = Some(get_user_info(&_req, &_ipaddr));
   }
 
   let data = Index {
     host: String::from(_req.connection_info().host()),
     ip: _ipaddr.to_string(),
     decimal_ip: ip_to_decimal(_ipaddr),
-    has_geo_info: _has_ip_info,
+    has_geo_info: _has_valid_ip,
     geo_info,
     user_info,
     json: Default::default(),
@@ -113,10 +126,11 @@ pub(crate) async fn index(_req: HttpRequest, _hb: web::Data<Handlebars<'_>>) -> 
 
 pub(crate) fn plain_response(_req: HttpRequest) -> HttpResponse {
   let _realip = _req.connection_info().realip_remote_addr().unwrap().to_string();
-  // let _realip = _conninfo.realip_remote_addr();
-  let _splitip = _realip.splitn(2, ":").nth(0).unwrap();
-  debug!("IP from the client: {}", _splitip);
-  HttpResponse::Ok().content_type("text/plain").body(_splitip)
+  debug!("Extracting IP from plain response: {}", _realip);
+
+  let _realip = clean_ip(_realip);
+  debug!("IP from the client: {}", _realip);
+  HttpResponse::Ok().content_type("text/plain").body(String::from(_realip))
 }
 
 pub fn internal_server_error<B>(res: dev::ServiceResponse<B>) -> Result<ErrorHandlerResponse<B>> {
