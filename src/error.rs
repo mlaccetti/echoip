@@ -1,4 +1,4 @@
-use actix_web::{ResponseError, HttpResponse};
+use actix_web::{HttpResponse, ResponseError};
 use derive_more::Display;
 use log::error;
 use maxminddb::MaxMindDBError;

@@ -1,10 +1,10 @@
 mod api;
+mod error;
 mod model;
 mod util;
-mod error;
 
 use actix_files as fs;
-use actix_web::{web, App, HttpServer, middleware::Logger, http};
+use actix_web::{http, middleware::Logger, web, App, HttpServer};
 use handlebars::Handlebars;
 use log::debug;
 
@@ -31,18 +31,14 @@ async fn main() -> std::io::Result<()> {
     App::new()
       .app_data(handlebars_ref.clone())
       .wrap(Logger::default())
-      .wrap(ErrorHandlers::new()
-        .handler(
-          http::StatusCode::INTERNAL_SERVER_ERROR,
-          api::internal_server_error,
-        ))
-      .service(
-        web::resource("/")
-          .route(web::get().to(index))
-      )
+      .wrap(ErrorHandlers::new().handler(
+        http::StatusCode::INTERNAL_SERVER_ERROR,
+        api::internal_server_error,
+      ))
+      .service(web::resource("/").route(web::get().to(index)))
       .service(fs::Files::new("/static", "./static"))
   })
-    .bind("localhost:8088")?
-    .run()
-    .await
+  .bind("localhost:8088")?
+  .run()
+  .await
 }

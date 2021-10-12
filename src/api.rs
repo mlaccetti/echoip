@@ -1,15 +1,15 @@
 use actix_files::NamedFile;
-use actix_web::{HttpResponse, HttpRequest, web, dev, Result};
-use actix_web::middleware::errhandlers::{ErrorHandlerResponse};
+use actix_web::middleware::errhandlers::ErrorHandlerResponse;
+use actix_web::{dev, web, HttpRequest, HttpResponse, Result};
 use dns_lookup::lookup_addr;
 use handlebars::Handlebars;
 use log::{debug, warn};
 use serde_json::json;
 use std::net::IpAddr;
 
-use crate::model::{Index, UserInfo, GeoInfo};
-use crate::util;
 use crate::error::EchoIpError;
+use crate::model::{GeoInfo, Index, UserInfo};
+use crate::util;
 use std::str::FromStr;
 
 fn ip_to_decimal(ip: IpAddr) -> String {
@@ -41,8 +41,18 @@ fn clean_ip(mut ip: String) -> String {
 }
 
 fn get_user_info(req: &HttpRequest, ip: &IpAddr) -> UserInfo {
-  let user_agent_raw: String = req.headers().get("User-Agent").unwrap().to_str().unwrap().to_string();
-  debug!("Raw user agent [ {} ] for {}", user_agent_raw, ip.to_string());
+  let user_agent_raw: String = req
+    .headers()
+    .get("User-Agent")
+    .unwrap()
+    .to_str()
+    .unwrap()
+    .to_string();
+  debug!(
+    "Raw user agent [ {} ] for {}",
+    user_agent_raw,
+    ip.to_string()
+  );
 
   let mut user_agent = user_agent_raw.clone();
   let mut user_agent_comment = String::new();
@@ -60,7 +70,10 @@ fn get_user_info(req: &HttpRequest, ip: &IpAddr) -> UserInfo {
   };
 }
 
-pub(crate) async fn index(_req: HttpRequest, _hb: web::Data<Handlebars<'_>>) -> Result<HttpResponse, EchoIpError> {
+pub(crate) async fn index(
+  _req: HttpRequest,
+  _hb: web::Data<Handlebars<'_>>,
+) -> Result<HttpResponse, EchoIpError> {
   let _accept = _req.headers().get("Accept");
   if _accept.is_some() {
     let _accept: String = _accept.unwrap().to_str().unwrap().to_string();
@@ -118,19 +131,27 @@ pub(crate) async fn index(_req: HttpRequest, _hb: web::Data<Handlebars<'_>>) -> 
   });
 
   debug!("Rendering Handlebars template.");
-  let body = _hb.render("index", &response).map_err(|_| EchoIpError::HandlebarsFailed)?;
+  let body = _hb
+    .render("index", &response)
+    .map_err(|_| EchoIpError::HandlebarsFailed)?;
 
   debug!("Returning response to browser.");
   Ok(HttpResponse::Ok().body(body))
 }
 
 pub(crate) fn plain_response(_req: HttpRequest) -> HttpResponse {
-  let _realip = _req.connection_info().realip_remote_addr().unwrap().to_string();
+  let _realip = _req
+    .connection_info()
+    .realip_remote_addr()
+    .unwrap()
+    .to_string();
   debug!("Extracting IP from plain response: {}", _realip);
 
   let _realip = clean_ip(_realip);
   debug!("IP from the client: {}", _realip);
-  HttpResponse::Ok().content_type("text/plain").body(String::from(_realip))
+  HttpResponse::Ok()
+    .content_type("text/plain")
+    .body(String::from(_realip))
 }
 
 pub fn internal_server_error<B>(res: dev::ServiceResponse<B>) -> Result<ErrorHandlerResponse<B>> {
