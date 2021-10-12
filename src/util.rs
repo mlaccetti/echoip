@@ -12,6 +12,7 @@ pub struct GeoipLookup {
 impl GeoipLookup {
   pub fn new() -> Self {
     Self {
+      // TODO these throw errors if the files are missing
       city_reader: Reader::open_readfile("./geoip/GeoLite2-City.mmdb").unwrap(),
       asn_reader: Reader::open_readfile("./geoip/GeoLite2-ASN.mmdb").unwrap(),
     }
@@ -30,30 +31,22 @@ impl GeoipLookup {
     // TODO if the IP cannot be found, insert some dummy data, or redirect to a different page?
 
     let _country = geoip_city.country.unwrap();
-    let _region: Subdivision = geoip_city
-      .subdivisions
-      .unwrap()
-      .iter()
-      .next()
-      .unwrap()
-      .clone();
+    let _region: Subdivision = geoip_city.subdivisions.unwrap().get(0).unwrap().clone();
     let _location = geoip_city.location.unwrap();
 
-    let country_name = String::from(_country.names.unwrap().get("en").unwrap().to_owned());
-    let country_iso = String::from(_country.iso_code.unwrap().to_owned());
-    let city = String::from(
-      geoip_city
-        .city
-        .unwrap()
-        .names
-        .unwrap()
-        .get("en")
-        .unwrap()
-        .to_owned(),
-    );
+    let country_name = _country.names.unwrap().get("en").unwrap().to_string();
+    let country_iso = _country.iso_code.unwrap().to_string();
+    let city = geoip_city
+      .city
+      .unwrap()
+      .names
+      .unwrap()
+      .get("en")
+      .unwrap()
+      .to_string();
 
-    let region = String::from(_region.names.unwrap().get("en").unwrap().to_owned());
-    let region_code = String::from(_region.iso_code.unwrap().to_owned());
+    let region = _region.names.unwrap().get("en").unwrap().to_string();
+    let region_code = _region.iso_code.unwrap().to_string();
 
     let metro_code = _location.metro_code.unwrap_or(0).to_owned();
 
@@ -70,7 +63,7 @@ impl GeoipLookup {
 
     let latitude = _location.latitude.unwrap();
     let longitude = _location.longitude.unwrap();
-    let timezone = String::from(_location.time_zone.unwrap().to_owned());
+    let timezone = _location.time_zone.unwrap().to_string();
 
     let asn = geoip_asn.autonomous_system_number.unwrap().to_string();
     let asn_org = geoip_asn

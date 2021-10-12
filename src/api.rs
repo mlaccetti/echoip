@@ -27,9 +27,9 @@ fn ip_to_decimal(ip: IpAddr) -> String {
  */
 fn clean_ip(mut ip: String) -> String {
   let pos = ip.rfind(':');
-  if pos.is_some() {
+  if let Some(value) = pos {
     debug!("Removing trailing colon from IP.");
-    ip = ip.split_at(pos.unwrap() - 1).0.to_string();
+    ip = ip.split_at(value - 1).0.to_string();
   }
 
   debug!("Removing square braces from IP.");
@@ -56,18 +56,18 @@ fn get_user_info(req: &HttpRequest, ip: &IpAddr) -> UserInfo {
 
   let mut user_agent = user_agent_raw.clone();
   let mut user_agent_comment = String::new();
-  if user_agent_raw.contains(" ") {
-    let ua_split: Vec<&str> = user_agent_raw.splitn(2, " ").collect();
+  if user_agent_raw.contains(' ') {
+    let ua_split: Vec<&str> = user_agent_raw.splitn(2, ' ').collect();
     user_agent = ua_split[0].to_string();
     user_agent_comment = ua_split[1].to_string();
   }
 
-  return UserInfo {
+  UserInfo {
     hostname: lookup_addr(ip).unwrap(),
     user_agent,
     user_agent_comment,
     user_agent_raw,
-  };
+  }
 }
 
 pub(crate) async fn index(
@@ -149,9 +149,7 @@ pub(crate) fn plain_response(_req: HttpRequest) -> HttpResponse {
 
   let _realip = clean_ip(_realip);
   debug!("IP from the client: {}", _realip);
-  HttpResponse::Ok()
-    .content_type("text/plain")
-    .body(String::from(_realip))
+  HttpResponse::Ok().content_type("text/plain").body(_realip)
 }
 
 pub fn internal_server_error<B>(res: dev::ServiceResponse<B>) -> Result<ErrorHandlerResponse<B>> {
