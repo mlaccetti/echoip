@@ -1,28 +1,24 @@
 DOCKER ?= docker
-DOCKER_IMAGE ?= mpolden/echoip
+DOCKER_IMAGE ?= mlaccetti/echoip
+
 OS := $(shell uname)
 ifeq ($(OS),Linux)
 	TAR_OPTS := --wildcards
 endif
-XGOARCH := amd64
-XGOOS := linux
-XBIN := $(XGOOS)_$(XGOARCH)/echoip
 
-all: lint test install
+all: lint test build
 
 test:
-	go test ./...
-
-vet:
-	go vet ./...
+	cargo check
 
 check-fmt:
-	bash -c "diff --line-format='%L' <(echo -n) <(gofmt -d -s .)"
+	cargo fmt
 
-lint: check-fmt vet
+lint: check-fmt
+	cargo clippy
 
-install:
-	go install ./...
+build:
+	cargo build
 
 databases := GeoLite2-City GeoLite2-Country GeoLite2-ASN
 
@@ -38,40 +34,5 @@ endif
 
 geoip-download: $(databases)
 
-# Create an environment to build multiarch containers (https://github.com/docker/buildx/)
-docker-multiarch-builder:
-	DOCKER_BUILDKIT=1 $(DOCKER) build -o . git://github.com/docker/buildx
-	mkdir -p ~/.docker/cli-plugins
-	mv buildx ~/.docker/cli-plugins/docker-buildx
-	$(DOCKER) buildx create --name multiarch-builder --node multiarch-builder --driver docker-container --use
-	$(DOCKER) run --rm --privileged multiarch/qemu-user-static --reset -p yes
-
-docker-build:
-	$(DOCKER) build -t $(DOCKER_IMAGE) .
-
-docker-login:
-	@echo "$(DOCKER_PASSWORD)" | $(DOCKER) login -u "$(DOCKER_USERNAME)" --password-stdin
-
-docker-test:
-	$(eval CONTAINER=$(shell $(DOCKER) run --rm --detach --publish-all $(DOCKER_IMAGE)))
-	$(eval DOCKER_PORT=$(shell $(DOCKER) port $(CONTAINER) | cut -d ":" -f 2))
-	curl -fsS -m 5 localhost:$(DOCKER_PORT) > /dev/null; $(DOCKER) stop $(CONTAINER)
-
-docker-push: docker-test docker-login
-	$(DOCKER) push $(DOCKER_IMAGE)
-
-docker-pushx: docker-multiarch-builder docker-test docker-login
-	$(DOCKER) buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t $(DOCKER_IMAGE) --push .
-
-xinstall:
-	env GOOS=$(XGOOS) GOARCH=$(XGOARCH) go install ./...
-
-publish:
-ifndef DEST_PATH
-	$(error DEST_PATH must be set when publishing)
-endif
-	rsync -a $(GOPATH)/bin/$(XBIN) $(DEST_PATH)/$(XBIN)
-	@sha256sum $(GOPATH)/bin/$(XBIN)
-
 run:
-	go run cmd/echoip/main.go -a data/asn.mmdb -c data/city.mmdb -f data/country.mmdb -H x-forwarded-for -r -s -p
+	cargo run
