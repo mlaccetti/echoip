@@ -8,6 +8,13 @@
     name="description"
     content="{{ data.host }} • What is my ip address? &mdash; The best tool to find your own ip address, and information about it."
   />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+  <meta name="msapplication-TileColor" content="#da532c">
+  <meta name="theme-color" content="#ffffff">
   <link rel="canonical" href="https://ifconfig.co/"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link
@@ -30,6 +37,7 @@
   <script lang="text/javascript">
     let host = "{{ data.host }}";
     let jsonObj = '{{{ json }}}';
+    let prettyJson = '{{{ pretty }}}';
     let data = JSON.parse(jsonObj);
     delete data.json;
     let tool = "curl";
@@ -63,12 +71,13 @@
     }
 
     function changeInput(input, button) {
+      // debugger;
       path = input;
       portQuery = "";
       portInput.classList.add("hidden");
       switch (path) {
         case "json":
-          output.innerText = JSON.stringify(data.json);
+          output.innerText = prettyJson;
           break;
         case "city":
           output.innerText = data["geo_info"]["city"];

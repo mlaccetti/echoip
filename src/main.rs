@@ -36,7 +36,7 @@ async fn main() -> std::io::Result<()> {
         api::internal_server_error,
       ))
       .service(web::resource("/").route(web::get().to(index)))
-      .service(fs::Files::new("/static", "./static"))
+      .service(fs::Files::new("/", "./static"))
   })
   .bind("localhost:8088")?
   .run()
