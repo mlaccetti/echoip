@@ -1,5 +1,6 @@
 DOCKER ?= docker
 DOCKER_IMAGE ?= mlaccetti/echoip
+SHELL := /bin/bash
 
 OS := $(shell uname)
 ifeq ($(OS),Linux)
@@ -20,15 +21,19 @@ lint: check-fmt
 build:
 	cargo build
 
-cross-compile:
+release:
 	CC_x86_64_unknown_linux_musl="x86_64-linux-musl-gcc" cargo build --release --target x86_64-unknown-linux-musl
 
-release:
+native-compile:
 	cargo build --release
 
 docker: release
 	docker build . --tag "ghcr.io/mlaccetti/echoip:latest"
 	docker tag "ghcr.io/mlaccetti/echoip:latest" "northamerica-northeast2-docker.pkg.dev/laccetti-193216/echoip/echoip:latest"
+
+package: release
+	zip echoip.zip -j target/x86_64-unknown-linux-musl/release/echoip
+	zip -ur echoip.zip static/ templates/ geoip/
 
 databases := GeoLite2-City GeoLite2-Country GeoLite2-ASN
 
