@@ -4,7 +4,9 @@ Rust version of mpolden's echoip
 ## Building
 
 ```bash
-make
+rustup target add x86_64-unknown-linux-gnu
+brew install filosottile/musl-cross/musl-cross
+make release
 ```
 
 ## Roadmap

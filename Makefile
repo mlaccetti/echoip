@@ -20,6 +20,13 @@ lint: check-fmt
 build:
 	cargo build
 
+release:
+	CC_x86_64_unknown_linux_musl="x86_64-linux-musl-gcc" cargo build --release --target x86_64-unknown-linux-musl
+
+docker: release
+	docker build . --tag "ghcr.io/mlaccetti/echoip:latest"
+	docker tag "ghcr.io/mlaccetti/echoip:latest" "northamerica-northeast2-docker.pkg.dev/laccetti-193216/echoip/echoip:latest"
+
 databases := GeoLite2-City GeoLite2-Country GeoLite2-ASN
 
 $(databases):

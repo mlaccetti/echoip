@@ -127,8 +127,7 @@ pub(crate) async fn index(
   debug!("Converting response to JSON.");
   let response = json!({
     "data": data,
-    "json": serde_json::to_string(&data).unwrap(),
-    "pretty": serde_json::to_string_pretty(&data).unwrap(),
+    "json": serde_json::to_string(&data).unwrap()
   });
 
   debug!("Rendering Handlebars template.");

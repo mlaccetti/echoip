@@ -38,7 +38,7 @@ async fn main() -> std::io::Result<()> {
       .service(web::resource("/").route(web::get().to(index)))
       .service(fs::Files::new("/", "./static"))
   })
-  .bind("localhost:8088")?
+  .bind("0.0.0.0:8088")?
   .run()
   .await
 }

@@ -65,11 +65,16 @@ impl GeoipLookup {
     let longitude = _location.longitude.unwrap();
     let timezone = _location.time_zone.unwrap().to_string();
 
-    let asn = geoip_asn.autonomous_system_number.unwrap().to_string();
+    let mut asn = geoip_asn.autonomous_system_number.unwrap().to_string();
     let asn_org = geoip_asn
       .autonomous_system_organization
       .unwrap()
       .to_string();
+
+    let parsed = asn.parse::<i32>();
+    if parsed.is_ok() {
+      asn = format!("AS{}", parsed.unwrap());
+    }
 
     Ok(GeoInfo {
       country_name,

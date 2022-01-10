@@ -1,21 +1,14 @@
-FROM rust:1.50
+FROM rust:1.57-slim-bullseye
+
+LABEL org.opencontainers.image.authors="michael@laccetti.com"
+
+EXPOSE 8088
 
 WORKDIR /echoip
 
-RUN echo 'fn main() {}' | tee dummy.rs
-COPY Cargo.toml .
-RUN sed -i 's#src/main.rs#dummy.rs#' Cargo.toml
-RUN cargo build --release
+COPY target/x86_64-unknown-linux-musl/release/echoip .
+COPY static static
+COPY templates templates
+COPY geoip geoip
 
-RUN sed -i 's#dummy.rs#src/main.rs#' Cargo.toml
-COPY . .
-RUN cargo build --release
-
-CMD ["target/release/echoip"]
-
-FROM rust:1.50-slim as runtime
-
-WORKDIR /echoip
-
-COPY --from=builder /echoip/target/release/echoip /usr/local/bin
-ENTRYPOINT ["./usr/local/bin/echoip"]
+CMD ["./echoip"]
