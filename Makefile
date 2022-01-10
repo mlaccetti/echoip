@@ -20,8 +20,11 @@ lint: check-fmt
 build:
 	cargo build
 
-release:
+cross-compile:
 	CC_x86_64_unknown_linux_musl="x86_64-linux-musl-gcc" cargo build --release --target x86_64-unknown-linux-musl
+
+release:
+	cargo build --release
 
 docker: release
 	docker build . --tag "ghcr.io/mlaccetti/echoip:latest"
