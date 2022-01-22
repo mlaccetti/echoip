@@ -6,11 +6,11 @@ use handlebars::Handlebars;
 use log::{debug, warn};
 use serde_json::json;
 use std::net::IpAddr;
+use std::str::FromStr;
 
 use crate::error::EchoIpError;
 use crate::model::{GeoInfo, Index, UserInfo};
-use crate::util;
-use std::str::FromStr;
+use crate::geoip_lookup;
 
 fn ip_to_decimal(ip: IpAddr) -> String {
   match ip {
@@ -29,7 +29,7 @@ fn clean_ip(mut ip: String) -> String {
   let pos = ip.rfind(':');
   if let Some(value) = pos {
     debug!("Removing trailing colon from IP.");
-    ip = ip.split_at(value - 1).0.to_string();
+    ip = ip.split_at(value).0.to_string();
   }
 
   debug!("Removing square braces from IP.");
@@ -70,22 +70,8 @@ fn get_user_info(req: &HttpRequest, ip: &IpAddr) -> UserInfo {
   }
 }
 
-pub(crate) async fn index(
-  _req: HttpRequest,
-  _hb: web::Data<Handlebars<'_>>,
-) -> Result<HttpResponse, EchoIpError> {
-  let _accept = _req.headers().get("Accept");
-  if _accept.is_some() {
-    let _accept: String = _accept.unwrap().to_str().unwrap().to_string();
-    debug!("Incoming content type: {}", _accept);
-    if _accept.contains("text/plain") || _accept.eq("*/*") {
-      debug!("Redirecting to plain response.");
-      let res: HttpResponse = plain_response(_req);
-      return Ok(res);
-    }
-  }
-
-  let _conn_info = _req.connection_info();
+fn generate_response(http_request: HttpRequest) -> Index {
+  let _conn_info = http_request.connection_info();
   let _realip = _conn_info.realip_remote_addr();
   let _realip = clean_ip(_realip.unwrap().to_string());
 
@@ -100,7 +86,7 @@ pub(crate) async fn index(
   if _has_valid_ip {
     debug!("Converted IP {} properly, getting GeoIP info.", _realip);
     _ipaddr = _parsed_ip.unwrap();
-    let lookup: util::GeoipLookup = util::GeoipLookup::new();
+    let lookup: geoip_lookup::GeoipLookup = geoip_lookup::GeoipLookup::new();
 
     let _geo_info = lookup.lookup_geo_for_ip(_ipaddr);
     if _geo_info.is_ok() {
@@ -111,18 +97,24 @@ pub(crate) async fn index(
     }
 
     debug!("Getting user data for {}.", _realip);
-    user_info = Some(get_user_info(&_req, &_ipaddr));
+    user_info = Some(get_user_info(&http_request, &_ipaddr));
   }
 
-  let data = Index {
-    host: String::from(_req.connection_info().host()),
+  Index {
+    host: String::from(http_request.connection_info().host()),
     ip: _ipaddr.to_string(),
     decimal_ip: ip_to_decimal(_ipaddr),
-    has_geo_info: _has_valid_ip,
+    has_geo_info: geo_info.is_some(),
     geo_info,
-    user_info,
-    json: Default::default(),
-  };
+    user_info
+  }
+}
+
+pub(crate) async fn html_response(
+  http_request: HttpRequest,
+  handlebars: web::Data<Handlebars<'_>>,
+) -> Result<HttpResponse, EchoIpError> {
+  let data = generate_response(http_request);
 
   debug!("Converting response to JSON.");
   let response = json!({
@@ -131,7 +123,7 @@ pub(crate) async fn index(
   });
 
   debug!("Rendering Handlebars template.");
-  let body = _hb
+  let body = handlebars
     .render("index", &response)
     .map_err(|_| EchoIpError::HandlebarsFailed)?;
 
@@ -139,8 +131,8 @@ pub(crate) async fn index(
   Ok(HttpResponse::Ok().body(body))
 }
 
-pub(crate) fn plain_response(_req: HttpRequest) -> HttpResponse {
-  let _realip = _req
+pub(crate) fn plain_response(http_request: HttpRequest) -> HttpResponse {
+  let _realip = http_request
     .connection_info()
     .realip_remote_addr()
     .unwrap()
@@ -150,6 +142,13 @@ pub(crate) fn plain_response(_req: HttpRequest) -> HttpResponse {
   let _realip = clean_ip(_realip);
   debug!("IP from the client: {}", _realip);
   HttpResponse::Ok().content_type("text/plain").body(_realip)
+}
+
+pub(crate) async fn json_response(http_request: HttpRequest) -> Result<HttpResponse> {
+  let data = generate_response(http_request);
+
+  debug!("Sending JSON response.");
+  Ok(HttpResponse::Ok().content_type("application/json").body(serde_json::to_string(&data).unwrap()))
 }
 
 pub fn internal_server_error<B>(res: dev::ServiceResponse<B>) -> Result<ErrorHandlerResponse<B>> {

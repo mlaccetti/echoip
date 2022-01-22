@@ -1,20 +1,22 @@
 mod api;
 mod error;
 mod model;
-mod util;
+mod geoip_lookup;
+mod guard;
 
 use actix_files as fs;
 use actix_web::{http, middleware::Logger, web, App, HttpServer};
 use handlebars::Handlebars;
 use log::debug;
 
-use crate::api::index;
+use crate::api::{html_response, json_response, plain_response};
+use crate::guard::AcceptHeader;
 use actix_web::middleware::errhandlers::ErrorHandlers;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
   std::env::set_var("RUST_LOG", "echoip=debug,actix_web=debug,info");
-  std::env::set_var("RUST_BACKTRACE", "1");
+  std::env::set_var("RUST_BACKTRACE", "full");
   env_logger::init();
 
   debug!("Starting server.");
@@ -35,10 +37,20 @@ async fn main() -> std::io::Result<()> {
         http::StatusCode::INTERNAL_SERVER_ERROR,
         api::internal_server_error,
       ))
-      .service(web::resource("/").route(web::get().to(index)))
+      .service(
+        web::resource("/")
+          .route(
+            web::get()
+              .guard(AcceptHeader { content_type: String::from("text/html") })
+              .to(html_response))
+          .route(web::get().to(plain_response))
+      )
+      .service(
+        web::resource("/json").to(json_response)
+      )
       .service(fs::Files::new("/", "./static"))
   })
-  .bind("0.0.0.0:8088")?
-  .run()
-  .await
+    .bind("0.0.0.0:8088")?
+    .run()
+    .await
 }

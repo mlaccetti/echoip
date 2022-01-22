@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct GeoInfo {
@@ -38,5 +37,4 @@ pub struct Index {
   pub(crate) has_geo_info: bool,
   pub(crate) geo_info: Option<GeoInfo>,
   pub(crate) user_info: Option<UserInfo>,
-  pub(crate) json: Value,
 }
