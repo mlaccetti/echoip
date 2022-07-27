@@ -8,6 +8,15 @@ pub(crate) struct AcceptHeader {
 
 impl Guard for AcceptHeader {
   fn check(&self, req: &RequestHead) -> bool {
-    req.headers().contains_key(http::header::ACCEPT) && String::from(req.headers.get(http::header::ACCEPT).unwrap().to_str().unwrap()).contains(&self.content_type)
+    req.headers().contains_key(http::header::ACCEPT)
+      && String::from(
+        req
+          .headers
+          .get(http::header::ACCEPT)
+          .unwrap()
+          .to_str()
+          .unwrap(),
+      )
+      .contains(&self.content_type)
   }
 }

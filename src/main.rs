@@ -1,8 +1,8 @@
 mod api;
 mod error;
-mod model;
 mod geoip_lookup;
 mod guard;
+mod model;
 
 use actix_files as fs;
 use actix_web::{http, middleware::Logger, web, App, HttpServer};
@@ -41,16 +41,17 @@ async fn main() -> std::io::Result<()> {
         web::resource("/")
           .route(
             web::get()
-              .guard(AcceptHeader { content_type: String::from("text/html") })
-              .to(html_response))
-          .route(web::get().to(plain_response))
+              .guard(AcceptHeader {
+                content_type: String::from("text/html"),
+              })
+              .to(html_response),
+          )
+          .route(web::get().to(plain_response)),
       )
-      .service(
-        web::resource("/json").to(json_response)
-      )
+      .service(web::resource("/json").to(json_response))
       .service(fs::Files::new("/", "./static"))
   })
-    .bind("0.0.0.0:8088")?
-    .run()
-    .await
+  .bind("0.0.0.0:8088")?
+  .run()
+  .await
 }

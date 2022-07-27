@@ -9,8 +9,8 @@ use std::net::IpAddr;
 use std::str::FromStr;
 
 use crate::error::EchoIpError;
-use crate::model::{GeoInfo, Index, UserInfo};
 use crate::geoip_lookup;
+use crate::model::{GeoInfo, Index, UserInfo};
 
 fn ip_to_decimal(ip: IpAddr) -> String {
   match ip {
@@ -106,7 +106,7 @@ fn generate_response(http_request: HttpRequest) -> Index {
     decimal_ip: ip_to_decimal(_ipaddr),
     has_geo_info: geo_info.is_some(),
     geo_info,
-    user_info
+    user_info,
   }
 }
 
@@ -148,7 +148,11 @@ pub(crate) async fn json_response(http_request: HttpRequest) -> Result<HttpRespo
   let data = generate_response(http_request);
 
   debug!("Sending JSON response.");
-  Ok(HttpResponse::Ok().content_type("application/json").body(serde_json::to_string(&data).unwrap()))
+  Ok(
+    HttpResponse::Ok()
+      .content_type("application/json")
+      .body(serde_json::to_string(&data).unwrap()),
+  )
 }
 
 pub fn internal_server_error<B>(res: dev::ServiceResponse<B>) -> Result<ErrorHandlerResponse<B>> {
