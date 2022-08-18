@@ -1,16 +1,36 @@
 use actix_files::NamedFile;
-use actix_web::middleware::errhandlers::ErrorHandlerResponse;
-use actix_web::{dev, web, HttpRequest, HttpResponse, Result};
+use actix_web::middleware::ErrorHandlerResponse;
+use actix_web::{dev, web, HttpRequest, HttpResponse, Responder, Result};
 use dns_lookup::lookup_addr;
 use handlebars::Handlebars;
 use log::{debug, warn};
 use serde_json::json;
-use std::net::IpAddr;
+use std::net::{AddrParseError, IpAddr, SocketAddr, TcpStream};
 use std::str::FromStr;
+use std::time::Duration;
 
 use crate::error::EchoIpError;
 use crate::geoip_lookup;
-use crate::model::{GeoInfo, Index, UserInfo};
+use crate::model::{GeoInfo, Index, IpResult, PortLookup, UserInfo};
+
+fn extract_ip(req: &HttpRequest) -> std::result::Result<IpResult, AddrParseError> {
+  let _conn_info = req.connection_info();
+  let _realip = _conn_info.realip_remote_addr();
+  let _realip = clean_ip(_realip.unwrap().to_string());
+
+  let mut _ipaddr: IpAddr = IpAddr::from_str("127.0.0.1").unwrap();
+  debug!("Converting IP {} to IpAddr.", _realip);
+
+  let _parsed_ip = _realip.parse::<IpAddr>();
+  if _parsed_ip.is_ok() {
+    return Ok(IpResult {
+      ip: _parsed_ip.unwrap(),
+      real_ip: _realip,
+    });
+  }
+
+  Err(_parsed_ip.err().unwrap())
+}
 
 fn ip_to_decimal(ip: IpAddr) -> String {
   match ip {
@@ -70,22 +90,22 @@ fn get_user_info(req: &HttpRequest, ip: &IpAddr) -> UserInfo {
   }
 }
 
-fn generate_response(http_request: HttpRequest) -> Index {
-  let _conn_info = http_request.connection_info();
-  let _realip = _conn_info.realip_remote_addr();
-  let _realip = clean_ip(_realip.unwrap().to_string());
-
-  let mut _ipaddr: IpAddr = IpAddr::from_str("127.0.0.1").unwrap();
-
+fn generate_response(req: HttpRequest) -> Index {
   let mut geo_info: Option<GeoInfo> = None;
   let mut user_info: Option<UserInfo> = None;
 
-  debug!("Converting IP {} to IpAddr.", _realip);
-  let _parsed_ip = _realip.parse::<IpAddr>();
+  let mut _ipaddr: IpAddr = IpAddr::from_str("127.0.0.1").unwrap();
+  let mut _realip;
+
+  let _parsed_ip = extract_ip(&req);
   let _has_valid_ip = _parsed_ip.is_ok();
   if _has_valid_ip {
+    let _unwrapped_ip = _parsed_ip.unwrap();
+    _ipaddr = _unwrapped_ip.ip;
+    _realip = _unwrapped_ip.real_ip;
+
     debug!("Converted IP {} properly, getting GeoIP info.", _realip);
-    _ipaddr = _parsed_ip.unwrap();
+
     let lookup: geoip_lookup::GeoipLookup = geoip_lookup::GeoipLookup::new();
 
     let _geo_info = lookup.lookup_geo_for_ip(_ipaddr);
@@ -97,11 +117,11 @@ fn generate_response(http_request: HttpRequest) -> Index {
     }
 
     debug!("Getting user data for {}.", _realip);
-    user_info = Some(get_user_info(&http_request, &_ipaddr));
+    user_info = Some(get_user_info(&req, &_ipaddr));
   }
 
   Index {
-    host: String::from(http_request.connection_info().host()),
+    host: String::from(req.connection_info().host()),
     ip: _ipaddr.to_string(),
     decimal_ip: ip_to_decimal(_ipaddr),
     has_geo_info: geo_info.is_some(),
@@ -125,13 +145,13 @@ pub(crate) async fn html_response(
   debug!("Rendering Handlebars template.");
   let body = handlebars
     .render("index", &response)
-    .map_err(|_| EchoIpError::HandlebarsFailed)?;
+    .map_err(|err| EchoIpError::HandlebarsFailed { source: err })?;
 
   debug!("Returning response to browser.");
   Ok(HttpResponse::Ok().body(body))
 }
 
-pub(crate) fn plain_response(http_request: HttpRequest) -> HttpResponse {
+pub(crate) async fn plain_response(http_request: HttpRequest) -> HttpResponse {
   let _realip = http_request
     .connection_info()
     .realip_remote_addr()
@@ -144,23 +164,43 @@ pub(crate) fn plain_response(http_request: HttpRequest) -> HttpResponse {
   HttpResponse::Ok().content_type("text/plain").body(_realip)
 }
 
-pub(crate) async fn json_response(http_request: HttpRequest) -> Result<HttpResponse> {
+pub(crate) async fn json_response(http_request: HttpRequest) -> HttpResponse {
   let data = generate_response(http_request);
 
   debug!("Sending JSON response.");
-  Ok(
-    HttpResponse::Ok()
-      .content_type("application/json")
-      .body(serde_json::to_string(&data).unwrap()),
-  )
+  HttpResponse::Ok()
+    .content_type("application/json")
+    .body(serde_json::to_string(&data).unwrap())
+}
+
+pub async fn port_lookup(req: HttpRequest, path: web::Path<u16>) -> HttpResponse {
+  let _port = path.into_inner();
+  let _ip = extract_ip(&req).unwrap();
+  let _real_ip = _ip.real_ip;
+  let _sock_addr = SocketAddr::new(_ip.ip, _port);
+
+  let stream = TcpStream::connect_timeout(&_sock_addr, Duration::new(5, 0));
+  let reachable = stream.is_ok();
+
+  let result = PortLookup {
+    ip: _real_ip,
+    port: _port,
+    reachable,
+  };
+
+  debug!("Sending port lookup response.");
+  HttpResponse::Ok()
+    .content_type("application/json")
+    .body(serde_json::to_string(&result).unwrap())
 }
 
 pub fn internal_server_error<B>(res: dev::ServiceResponse<B>) -> Result<ErrorHandlerResponse<B>> {
-  // debug!("Error! {:#?}", res.);
   let new_resp = NamedFile::open("static/errors/500.html")?
-    .set_status_code(res.status())
-    .into_response(res.request())?;
-  Ok(ErrorHandlerResponse::Response(
-    res.into_response(new_resp.into_body()),
-  ))
+    .customize()
+    .with_status(res.status())
+    .respond_to(res.request())
+    .map_into_boxed_body()
+    .map_into_right_body();
+
+  Ok(ErrorHandlerResponse::Response(res.into_response(new_resp)))
 }

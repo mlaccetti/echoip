@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::net::IpAddr;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct GeoInfo {
@@ -37,4 +38,16 @@ pub struct Index {
   pub(crate) has_geo_info: bool,
   pub(crate) geo_info: Option<GeoInfo>,
   pub(crate) user_info: Option<UserInfo>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PortLookup {
+  pub(crate) ip: String,
+  pub(crate) port: u16,
+  pub(crate) reachable: bool,
+}
+
+pub struct IpResult {
+  pub(crate) ip: IpAddr,
+  pub(crate) real_ip: String,
 }

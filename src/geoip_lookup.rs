@@ -1,4 +1,4 @@
-use maxminddb::{geoip2, geoip2::model::Subdivision, Reader};
+use maxminddb::{geoip2, geoip2::city::Subdivision, Reader};
 use std::net::IpAddr;
 
 use crate::error::EchoIpError;

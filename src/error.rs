@@ -1,13 +1,13 @@
 use actix_web::{HttpResponse, ResponseError};
-use derive_more::Display;
+use derive_more::{Display, Error};
+use handlebars::RenderError;
 use log::error;
 use maxminddb::MaxMindDBError;
-use thiserror::Error;
 
 #[derive(Debug, Display, Error)]
 pub enum EchoIpError {
   #[display(fmt = "Could not compile Handlebars template")]
-  HandlebarsFailed,
+  HandlebarsFailed { source: RenderError },
 
   #[display(fmt = "Could not get IP information from Max Mind DB")]
   MaxMindDbFailed { source: MaxMindDBError },
@@ -17,8 +17,8 @@ pub enum EchoIpError {
 impl ResponseError for EchoIpError {
   fn error_response(&self) -> HttpResponse {
     match self {
-      EchoIpError::HandlebarsFailed => {
-        error!("Handlebars template compilation failed");
+      EchoIpError::HandlebarsFailed { source } => {
+        error!("Handlebars template compilation failed: {}", source);
         HttpResponse::InternalServerError().finish()
       }
 

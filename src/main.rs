@@ -9,9 +9,9 @@ use actix_web::{http, middleware::Logger, web, App, HttpServer};
 use handlebars::Handlebars;
 use log::debug;
 
-use crate::api::{html_response, json_response, plain_response};
+use crate::api::{html_response, json_response, plain_response, port_lookup};
 use crate::guard::AcceptHeader;
-use actix_web::middleware::errhandlers::ErrorHandlers;
+use actix_web::middleware::ErrorHandlers;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -23,7 +23,7 @@ async fn main() -> std::io::Result<()> {
 
   let mut handlebars = Handlebars::new();
   handlebars
-    .register_templates_directory(".html.hbs", "./templates")
+    .register_templates_directory(".hbs", "./templates")
     .unwrap();
   let handlebars_ref = web::Data::new(handlebars);
 
@@ -49,6 +49,7 @@ async fn main() -> std::io::Result<()> {
           .route(web::get().to(plain_response)),
       )
       .service(web::resource("/json").to(json_response))
+      .service(web::resource("/port/{port}").to(port_lookup))
       .service(fs::Files::new("/", "./static"))
   })
   .bind("0.0.0.0:8088")?

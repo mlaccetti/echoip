@@ -1,5 +1,4 @@
-use actix_web::dev::RequestHead;
-use actix_web::guard::Guard;
+use actix_web::guard::{Guard, GuardContext};
 use actix_web::http;
 
 pub(crate) struct AcceptHeader {
@@ -7,10 +6,11 @@ pub(crate) struct AcceptHeader {
 }
 
 impl Guard for AcceptHeader {
-  fn check(&self, req: &RequestHead) -> bool {
-    req.headers().contains_key(http::header::ACCEPT)
+  fn check(&self, ctx: &GuardContext<'_>) -> bool {
+    ctx.head().headers.contains_key(http::header::ACCEPT)
       && String::from(
-        req
+        ctx
+          .head()
           .headers
           .get(http::header::ACCEPT)
           .unwrap()

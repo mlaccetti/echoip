@@ -33,272 +33,11 @@
     integrity="sha384-b92sF+wDNTHrfEtRaYo+EpcA8FUyHOSXrdxKc9XB9kaaX1rSQAgMevW6cYeE5Bdv"
     crossorigin="anonymous"
   />
-
-  <script lang="text/javascript">
+  <link rel="stylesheet" href="/css/style.css" />
+  <script type="text/javascript">
     let host = "{{ data.host }}";
     let jsonObj = '{{{ json }}}';
-    let data = JSON.parse(jsonObj);
-    delete data.json;
-    let tool = "curl";
-    let commandBox, widgetBox, compositePath, commandStr;
-    let path;
-    let ipQuery, portQuery;
-    let ipCheckBox, portCheckBox, portInput;
-    let ip = "";
-
-    window.onload = (event) => {
-      commandBox = document.getElementById("command");
-      widgetBox = document.getElementById("output");
-      ipCheckBox = document.getElementById("ipCheckBox");
-      portCheckBox = document.getElementById("portCheckBox");
-      portInput = document.getElementById("portInput");
-      reset();
-      setcommdStr();
-      changeInput("ip");
-    };
-
-    function reset() {
-      path = "";
-      ipQuery = "";
-      portQuery = "";
-    }
-
-    function setcommdStr() {
-      compositePath = `${path}${portQuery}${ipQuery}`;
-      commandStr = `${tool} ${host}/${compositePath}`;
-      commandBox.innerText = commandStr;
-    }
-
-    function changeInput(input, button) {
-      // debugger;
-      path = input;
-      portQuery = "";
-      portInput.classList.add("hidden");
-      switch (path) {
-        case "json":
-          output.innerText = JSON.stringify(data, null, 2);
-          break;
-        case "city":
-          output.innerText = data["geo_info"]["city"];
-          break;
-        case "country":
-          output.innerText = data["geo_info"]["country_name"];
-          break;
-        case "country-iso":
-          output.innerText = data["geo_info"]["country_iso"];
-          break;
-        case "port":
-          portInput.classList.remove("hidden");
-          path = "port";
-          output.innerText = "{}";
-          let currentPort = document.querySelector("#portInput").value;
-          updatePort(currentPort);
-          break;
-        case "ip":
-          output.innerText = data["ip"];
-          path = "";
-          break;
-        case "asn":
-          output.innerText = `${data["geo_info"]["asn_org"]} ${data["geo_info"]["asn"]}`;
-          path = "";
-          break;
-        default:
-          output.innerText = data[path];
-      }
-      setcommdStr();
-
-      // set button selected
-      if (button) {
-        allButtons = document.querySelectorAll(("button.selected"));
-        allButtons.forEach((btn) => {
-          btn.classList.remove("selected");
-        });
-
-        button.classList.add("selected");
-      }
-    }
-
-    function navigate(event) {
-      console.log("navigate", compositePath);
-      window.location = compositePath;
-    }
-
-    function updatePort(value) {
-      port = value;
-      portQuery = `/${port}`;
-      setcommdStr();
-    }
-
-    function updateIP(value) {
-      ip = value;
-      ipQuery = `?ip=${ip}`;
-      setcommdStr();
-      changeInput("ip", null);
-    }
   </script>
-
-  <style>
-    html,
-    .pure-g [class*="pure-u"] {
-      background-color: white;
-      font-family: "Open Sans", sans-serif;
-    }
-
-    pre {
-      font-family: "Monaco", "Menlo", "Consolas", "Courier New", monospace;
-      white-space: pre-wrap; /* Since CSS 2.1 */
-      white-space: -moz-pre-wrap; /* Mozilla, since 1999 */
-      white-space: -pre-wrap; /* Opera 4-6 */
-      white-space: -o-pre-wrap; /* Opera 7 */
-      word-wrap: break-word;
-    }
-
-    a {
-      /* background: #e3e3e3; */
-      text-decoration: underline;
-      color: #000;
-    }
-
-    a:hover, a:active {
-      background: #d7d7d7;
-    }
-
-    .ip {
-      border: 1px solid #cbcbcb;
-      background: #f2f2f2;
-      font-size: 36px;
-      padding: 6px;
-      word-wrap: break-word;
-    }
-
-    svg.github-corner {
-      fill: #151513;
-      color: #fff;
-    }
-
-    .footer {
-      margin-top: 34px;
-      border-top: 1px solid #cbcbcb;
-    }
-
-    .content {
-      margin-left: auto;
-      margin-right: auto;
-      padding-left: 1em;
-      padding-right: 1em;
-      max-width: 1024px;
-    }
-
-    .center {
-      justify-content: center;
-    }
-
-    .info-table td,
-    .info-table th {
-      padding: 5px;
-      border: 2px solid #ababab;
-      word-wrap: break-word;
-    }
-
-    .info-table th[scope="row"] {
-      background-color: #d5d5d5;
-      text-align: left;
-    }
-
-    .widgetbox {
-      width: 100%;
-      padding: 0.5rem;
-      border: 1px solid grey;
-      font-family: "Courier New", Courier, monospace;
-      margin-top: 0.5rem;
-      box-sizing: border-box;
-    }
-
-    .widgetbox.input :first-child::before {
-      content: "$ ";
-      white-space: pre;
-    }
-
-    .widgetbox.output {
-      min-height: 4em;
-      white-space: pre;
-      overflow-x: scroll;
-    }
-
-    .l-box {
-      margin: 0 1rem;
-    }
-
-    .align-right {
-      text-align: right;
-    }
-
-    .medium-input {
-      width: 10em;
-    }
-
-    button.selected {
-      background-color: rgb(208 208 208);
-    }
-
-    .input-buttons {
-      line-height: 2.6em;
-      font-size: smaller;
-    }
-
-    /* DARK MODE OVERRIDES */
-    @media (prefers-color-scheme: dark) {
-      html,
-      .pure-g [class*="pure-u"],
-      a {
-        background-color: #161719;
-        color: #d8d9da;
-      }
-
-      .ip {
-        border: 1px solid #313233;
-        background: #212223;
-      }
-
-      .footer {
-        color: #8e8e8e !important;
-        border-top: 1px solid #313233;
-      }
-
-      a:hover, a:active {
-        background: #3d3e3f;
-      }
-
-      svg.github-corner {
-        fill: #f8f9fa;
-        color: #161719;
-      }
-
-      .info-table th[scope="row"] {
-        background-color: #2e2e2e;
-        color: rgb(220, 220, 220);
-        text-align: left;
-      }
-
-      .pure-button {
-        background-color: #2e2e2e;
-        color: rgb(220, 220, 220);
-      }
-
-      .pure-button.selected {
-        background-color: rgb(125 125 125);
-      }
-
-      .pure-input {
-        background-color: #e6e6e6;
-        color: #666;
-      }
-
-      .pure-input::placeholder {
-        color: #bbb;
-      }
-    }
-  </style>
 </head>
 <body>
 <div class="content">
@@ -459,6 +198,7 @@
             >
               ip
             </button>
+            {{#if data.geo_info.country_name}}
             <button
               name="country"
               class="pure-button widget-select"
@@ -473,6 +213,8 @@
             >
               country-iso
             </button>
+            {{/if}}
+            {{#if data.geo_info.city}}
             <button
               name="city"
               class="pure-button widget-select"
@@ -480,6 +222,8 @@
             >
               city
             </button>
+            {{/if}}
+            {{#if data.geo_info.asn}}
             <button
               name="asn"
               class="pure-button widget-select"
@@ -487,6 +231,7 @@
             >
               asn
             </button>
+            {{/if}}
             <button
               name="json"
               class="pure-button widget-select"
@@ -594,5 +339,6 @@
     </div>
   </div>
 </div>
+<script type="text/javascript" src="/js/main.js"></script>
 </body>
 </html>
