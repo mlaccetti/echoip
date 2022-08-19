@@ -1,4 +1,4 @@
-FROM rust:1.57-bullseye as build
+FROM rust:1.63-bullseye as build
 LABEL org.opencontainers.image.authors="michael@laccetti.com"
 
 WORKDIR /echoip

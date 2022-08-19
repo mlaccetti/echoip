@@ -1,4 +1,4 @@
-FROM rust:1.57-slim-bullseye
+FROM rust:1.63-slim-bullseye
 
 LABEL org.opencontainers.image.authors="michael@laccetti.com"
 
