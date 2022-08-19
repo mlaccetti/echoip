@@ -1,8 +1,11 @@
-.idea
+.cargo/
+.github/
+.idea/
+.vscode/
+
 .editorconfig
 *.iml
 
-Dockerfile
-
 target/
-!target/x86_64-unknown-linux-musl/release/echoip
+
+Dockerfile

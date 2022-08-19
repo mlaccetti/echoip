@@ -21,15 +21,23 @@ lint: check-fmt
 build:
 	cargo build
 
-release:
-	CC_x86_64_unknown_linux_musl="x86_64-linux-musl-gcc" cargo build --release --target x86_64-unknown-linux-musl
-
-native-compile:
+local-release:
 	cargo build --release
 
-docker: release
-	docker build . --tag "ghcr.io/mlaccetti/echoip:latest"
+docker-build:
+	docker build . --target build --tag "echoip:build"
+
+docker:
+	docker build . --tag "echoip:latest"
+	docker tag "echoip:latest" "ghcr.io/mlaccetti/echoip:latest"
 	docker tag "ghcr.io/mlaccetti/echoip:latest" "northamerica-northeast2-docker.pkg.dev/laccetti-193216/echoip/echoip:latest"
+
+prep-env:
+	rustup target add x86_64-unknown-linux-gnu
+	brew install SergioBenitez/osxct/x86_64-unknown-linux-gnu
+
+release: prep-env
+	TARGET_CC=x86_64-unknown-linux-gnu-musl cargo build --release --target x86_64-unknown-linux-musl
 
 package: release
 	zip echoip.zip -j target/x86_64-unknown-linux-musl/release/echoip
