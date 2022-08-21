@@ -1,6 +1,6 @@
 [package]
 name = "echoip"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Michael Laccetti <michael@laccetti.com>"]
 edition = "2021"
 include = ["/Cargo.toml", "/src/**/*.rs", "/README.md", "/LICENSE"]
