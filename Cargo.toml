@@ -3,7 +3,7 @@ name = "echoip"
 version = "0.1.0"
 authors = ["Michael Laccetti <michael@laccetti.com>"]
 edition = "2021"
-include = ["/Cargo.toml", "/src/**/*.rs", "/README.md", "/LICENSE"]]
+include = ["/Cargo.toml", "/src/**/*.rs", "/README.md", "/LICENSE"]
 publish = false
 
 [[bin]]
