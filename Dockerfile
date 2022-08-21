@@ -5,14 +5,12 @@ WORKDIR /echoip
 RUN apk update && apk add musl-dev && \
     cargo install cargo-chef
 
----
 FROM chef AS plan
 
 COPY . .
 
 RUN cargo chef prepare --recipe-path recipe.json
 
----
 FROM chef AS build
 
 RUN addgroup -g 10001 echoip && \
@@ -24,7 +22,6 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 RUN cargo build --release
 
----
 FROM scratch as release
 LABEL org.opencontainers.image.authors="michael@laccetti.com"
 
