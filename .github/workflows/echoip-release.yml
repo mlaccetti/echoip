@@ -34,8 +34,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-#      - name: Download GeoIP Information
-#        run: make geoip-download
+      - name: Download GeoIP Information
+        run: make geoip-download
 #
 #      - name: Build and push Docker image
 #        uses: docker/build-push-actionv3
