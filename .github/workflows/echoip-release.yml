@@ -35,6 +35,9 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: mlaccetti/echoip
+          tags: |
+            type=edge,branch=main
+            type=ref,event=tag
 
       - name: Download GeoIP Information
         shell: bash
