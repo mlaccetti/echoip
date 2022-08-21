@@ -2,7 +2,9 @@ name: CD Release
 
 on:
   push:
-    branches: [main, 'release']
+    branches:
+      - 'main'
+      - 'releases/**'
 
 env:
   REGISTRY: ghcr.io
@@ -25,13 +27,13 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-#
-#      - name: Extract metadata (tags, labels) for Docker
-#        id: meta
-#        uses: docker/metadata-action@v4
-#        with:
-#          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-#
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
 #      - name: Download GeoIP Information
 #        run: make geoip-download
 #
