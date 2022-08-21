@@ -35,7 +35,11 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Download GeoIP Information
+        shell: bash
         run: make geoip-download
+        env:
+          GEOIP_LICENSE_KEY: ${{ secrets.GEOIP_LICENSE_KEY }}
+
 #
 #      - name: Build and push Docker image
 #        uses: docker/build-push-actionv3
