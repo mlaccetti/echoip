@@ -2,8 +2,8 @@ name: CI Build
 
 on:
   push:
-  pull_request:
-    branches: [ main ]
+    branches-ignore:
+      - main
 
 env:
   CARGO_TERM_COLOR: always
