@@ -37,6 +37,7 @@ jobs:
           images: mlaccetti/echoip
           tags: |
             type=edge,branch=main
+            type=sha,enable=true,priority=100,prefix=edge-,suffix=,format=short,branch=main
             type=ref,event=tag
 
       - name: Download GeoIP Information
