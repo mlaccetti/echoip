@@ -16,5 +16,5 @@ jobs:
       - run: git config --global user.name 'Michael Laccetti'
       - run: git config --global user.email 'michael@laccetti.com'
       - run: cargo install cargo-release
-      - run: cargo release patch
+      - run: cargo release patch --execute --no-confirm --no-push
       - run: git push
