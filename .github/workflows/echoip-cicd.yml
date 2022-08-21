@@ -1,10 +1,7 @@
-name: CD Release
+name: CICD
 
 on:
   push:
-    branches:
-      - 'main'
-      - 'releases/**'
 
 env:
   REGISTRY: ghcr.io
@@ -38,14 +35,13 @@ jobs:
           tags: |
             type=edge,branch=main
             type=sha,enable=true,priority=100,prefix=edge-,suffix=,format=short,branch=main
-            type=ref,event=tag
+            type=semver,pattern={{version}}
 
       - name: Download GeoIP Information
         shell: bash
         run: make geoip-download
         env:
           GEOIP_LICENSE_KEY: ${{ secrets.GEOIP_LICENSE_KEY }}
-
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3

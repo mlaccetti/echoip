@@ -1,0 +1,20 @@
+name: Version Increment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    if: "!startsWith(github.event.head_commit.message, '[RELEASE]')"
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+      - run: git config --global user.name 'Michael Laccetti'
+      - run: git config --global user.email 'michael@laccetti.com'
+      - run: cargo install cargo-release
+      - run: cargo release patch
+      - run: git push
