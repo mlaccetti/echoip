@@ -14,6 +14,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Download GeoIP Information
-        run: make databases
+        run: make geoip-download
       - name: Create Docker Container
         run: make docker
