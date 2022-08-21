@@ -1,0 +1,19 @@
+name: Rust Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download GeoIP Information
+        run: make databases
+      - name: Create Docker Container
+        run: make docker
