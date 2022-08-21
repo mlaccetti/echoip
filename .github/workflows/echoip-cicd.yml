@@ -47,7 +47,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          push: ${{ contains(fromJson('["refs/heads/main", "refs/tags"]'), github.ref) }}
+          push: ${{ contains(fromJson('["refs/heads/main", "refs/tags/", "refs/releases/"]'), github.ref) }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
