@@ -44,7 +44,7 @@ jobs:
           GEOIP_LICENSE_KEY: ${{ secrets.GEOIP_LICENSE_KEY }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           context: .
           push: ${{ contains(fromJson('["refs/heads/main", "refs/tags/", "refs/releases/"]'), github.ref) }}
