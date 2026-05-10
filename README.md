@@ -20,3 +20,4 @@ cargo release patch --execute --no-confirm --no-push --no-tag
 - [ ] i18n
 - [ ] a11y
 - [ ] o11y
+a
